@@ -2,6 +2,7 @@ var https = require('https');
 var fs = require('fs');
 var Hapi = require('hapi');
 var jwt = require('jsonwebtoken');
+var handler = require('./lib/handler');
 
 var server = new Hapi.Server();
 server.connection({ 
@@ -18,19 +19,25 @@ server.connection({
 // Add the route
 server.route({
   method: 'PUT',
-  path:'/common', 
-  handler: function (request, reply) {
-    var token = request.headers.authorization.split(' ')[1];
-    jwt.verify(token, process.env.TOKEN_PASSPHRASE, function(err, decoded) {
-      if (err) throw err;
-      reply('hello world');
-    });
-  }
+  path: '/common', 
+  handler: handler.add
+});
+
+server.route({
+  method: 'POST',
+  path: '/renew',
+  handler: handler.renew
+});
+
+server.route({
+  method: 'GET',
+  path: '/last',
+  handler: handler.last
 });
 
 // Start the server
 server.start();
 console.log('Server started');
 
-var token = jwt.sign({ user: 'furi' }, process.env.TOKEN_PASSPHRASE);
+var token = jwt.sign({ user: 'furi' }, process.env.TOKEN_PASSPHRASE, {expiresInMinutes: 60 * 24 * 90});
 console.log('Token: ' + token);
